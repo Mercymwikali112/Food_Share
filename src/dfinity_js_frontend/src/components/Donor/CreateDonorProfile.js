@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Container, Button, Form } from "react-bootstrap";
+import { Container, Button, Form, Row, Col } from "react-bootstrap";
 import { createDonorProfile } from "../../utils/foodshare";
 
 const CreateDonorProfile = ({ fetchDonor }) => {
@@ -9,7 +9,8 @@ const CreateDonorProfile = ({ fetchDonor }) => {
     const [address, setAddress] = useState("");
     const [businessType, setBusinessType] = useState("");
 
-    const handlePublishProfile = async () => {
+    const handlePublishProfile = async (event) => {
+        event.preventDefault();
         try {
             const donor = {
                 name,
@@ -29,45 +30,57 @@ const CreateDonorProfile = ({ fetchDonor }) => {
 
     return (
         <Container className="mt-4">
-            <h1>Create Donor Profile</h1>
-            <Form>
-                <Form.Group>
-                    <Form.Label>Name</Form.Label>
-                    <Form.Control
-                        type="text"
-                        placeholder="Enter your name"
-                        value={name}
-                        onChange={e => setName(e.target.value)}
-                    />
-                </Form.Group>
-                <Form.Group>
-                    <Form.Label>Email</Form.Label>
-                    <Form.Control
-                        type="text"
-                        placeholder="Enter your email"
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                    />
-                </Form.Group>
-                <Form.Group>
-                    <Form.Label>Phone Number</Form.Label>
-                    <Form.Control
-                        type="text"
-                        placeholder="Enter your phone number"
-                        value={phoneNumber}
-                        onChange={e => setPhoneNumber(e.target.value)}
-                    />
-                </Form.Group>
-                <Form.Group>
-                    <Form.Label>Address</Form.Label>
-                    <Form.Control
-                        type="text"
-                        placeholder="Enter your address"
-                        value={address}
-                        onChange={e => setAddress(e.target.value)}
-                    />
-                </Form.Group>
-                <Form.Group>
+            <h1 className="text-center mb-4">Create Donor Profile</h1>
+            <Form onSubmit={handlePublishProfile}>
+                <Row>
+                    <Col md={6}>
+                        <Form.Group controlId="formName" className="mb-3">
+                            <Form.Label>Name</Form.Label>
+                            <Form.Control
+                                type="text"
+                                placeholder="Enter your name"
+                                value={name}
+                                onChange={e => setName(e.target.value)}
+                            />
+                        </Form.Group>
+                    </Col>
+                    <Col md={6}>
+                        <Form.Group controlId="formEmail" className="mb-3">
+                            <Form.Label>Email</Form.Label>
+                            <Form.Control
+                                type="email"
+                                placeholder="Enter your email"
+                                value={email}
+                                onChange={e => setEmail(e.target.value)}
+                            />
+                        </Form.Group>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col md={6}>
+                        <Form.Group controlId="formPhoneNumber" className="mb-3">
+                            <Form.Label>Phone Number</Form.Label>
+                            <Form.Control
+                                type="tel"
+                                placeholder="Enter your phone number"
+                                value={phoneNumber}
+                                onChange={e => setPhoneNumber(e.target.value)}
+                            />
+                        </Form.Group>
+                    </Col>
+                    <Col md={6}>
+                        <Form.Group controlId="formAddress" className="mb-3">
+                            <Form.Label>Address</Form.Label>
+                            <Form.Control
+                                type="text"
+                                placeholder="Enter your address"
+                                value={address}
+                                onChange={e => setAddress(e.target.value)}
+                            />
+                        </Form.Group>
+                    </Col>
+                </Row>
+                <Form.Group controlId="formBusinessType" className="mb-4">
                     <Form.Label>Business Type</Form.Label>
                     <Form.Control
                         as="select"
@@ -81,9 +94,11 @@ const CreateDonorProfile = ({ fetchDonor }) => {
                         <option value="Other">Other</option>
                     </Form.Control>
                 </Form.Group>
-                <Button variant="primary" onClick={handlePublishProfile}>
-                    Publish Profile
-                </Button>
+                <div className="text-center">
+                    <Button variant="primary" type="submit">
+                        Publish Profile
+                    </Button>
+                </div>
             </Form>
         </Container>
     );
