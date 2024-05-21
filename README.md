@@ -1,4 +1,4 @@
-🌱 FoodShare Documentation
+ Food Share 🥗 Documentation
 Overview
 
 This documentation provides a comprehensive overview of FoodShare, a smart contract-based application designed to address food waste and combat hunger by connecting food surplus with those in need. It enables interactions between donors, receivers, and drivers through profiles, surplus postings, delivery assignments, and payment processing.

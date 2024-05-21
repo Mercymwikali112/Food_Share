@@ -7,11 +7,11 @@ import { Button } from "../../components/Button";
 import { Heading } from "../../components/Heading";
 import { Text } from "../../components/Text";
 
-export default function HomeJobListingPage() {
+export default function HomeLanding() {
   return (
     <>
       <Helmet>
-        <title>Farm Work Flow</title>
+        <title> Food Share 🥗</title>
         <meta
           name="description"
           content="Web site created using create-react-app"
