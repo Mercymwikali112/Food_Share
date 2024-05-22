@@ -33,18 +33,18 @@ import { v4 as uuidv4 } from "uuid";
 
 // Food Contract Status
 const Status = Variant({
-  Pending: text,
-  Completed: text,
-  Cancelled: text,
-  Accepted: text,
+  Pending: Null,
+  Completed: Null,
+  Cancelled: Null,
+  Accepted: Null,
 });
 
 // Business Type
 const BusinessType = Variant({
-  Restaurant: text,
-  Grocery: text,
-  Bakery: text,
-  Other: text,
+  Restaurant: Null,
+  Grocery: Null,
+  Bakery: Null,
+  Other: Null,
 });
 
 // Food Contract
@@ -81,16 +81,9 @@ const ReceiverProfile = Record({
 
 // FoodSurplusPost Status
 const FoodSurplusStatus = Variant({
-  Available: text,
-  Claimed: text,
+  Available: Null,
+  Claimed: Null,
 });
-
-// Food Details
-// const FoodDetails = Variant({
-//     type: text,
-//     Quantity: nat64,
-//     ExpiryDate: text
-// });
 
 // FoodSurplusPost
 const FoodSurplusPost = Record({
@@ -106,20 +99,20 @@ const FoodSurplusPost = Record({
 
 // Delivery Status
 const DeliveryStatus = Variant({
-  Pending: text,
-  InTransit: text,
-  Delivered: text,
-  Cancelled: text,
+  Pending: Null,
+  InTransit: Null,
+  Delivered: Null,
+  Cancelled: Null,
 });
 
 // Vehicle Types
 const VehicleType = Variant({
-  Car: text,
-  Van: text,
-  Motorcycle: text,
-  Bicycle: text,
-  Truck: text,
-  Other: text,
+  Car: Null,
+  Van: Null,
+  Motorcycle: Null,
+  Bicycle: Null,
+  Truck: Null,
+  Other: Null,
 });
 
 // Delivery Driver Profile
@@ -209,12 +202,12 @@ const DeliveryAssignmentPayload = Record({
 });
 
 const PayStatus = Variant({
-  PaymentPending: text,
-  Completed: text,
-  Cancelled: text,
+  PaymentPending: Null,
+  Completed: Null,
+  Cancelled: Null,
 });
 
-// Assigment Payment Struct
+// Assignment Payment Struct
 const AssignmentPayment = Record({
   assignmentId: text,
   amount: nat64,
@@ -241,25 +234,15 @@ const foodContractStorage = StableBTreeMap(0, text, FoodContract);
 const donorProfileStorage = StableBTreeMap(1, text, DonorProfile);
 const receiverProfileStorage = StableBTreeMap(2, text, ReceiverProfile);
 const foodSurplusPostStorage = StableBTreeMap(3, text, FoodSurplusPost);
-const deliveryDriverProfileStorage = StableBTreeMap(
-  4,
-  text,
-  DeliveryDriverProfile
-);
+const deliveryDriverProfileStorage = StableBTreeMap(4, text, DeliveryDriverProfile);
 const deliveryAssignmentStorage = StableBTreeMap(5, text, DeliveryAssignment);
 const pendingJobPaymentStorage = StableBTreeMap(6, nat64, AssignmentPayment);
-const persistedJobPaymentStorage = StableBTreeMap(
-  7,
-  Principal,
-  AssignmentPayment
-);
+const persistedJobPaymentStorage = StableBTreeMap(7, Principal, AssignmentPayment);
 
 const TIMEOUT_PERIOD = 9600n; // reservation period in seconds
 
-/* 
-    initialization of the Ledger canister. The principal text value is hardcoded because 
-    we set it in the `dfx.json`
-*/
+// Initialization of the Ledger canister. The principal text value is hardcoded because 
+// we set it in the `dfx.json`
 const icpCanister = Ledger(Principal.fromText("ryjl3-tyaaa-aaaaa-aaaba-cai"));
 
 export default Canister({
@@ -287,7 +270,7 @@ export default Canister({
         ...payload,
         contractId,
         receiverId: None,
-        status: { Pending: "Waiting for approval" }, // Initial status
+        status: { Pending: null }, // Initial status
       };
 
       // Insert the newly created contract into the storage
@@ -328,7 +311,7 @@ export default Canister({
         ...payload,
         assignmentId,
         driverId: None,
-        status: { Pending: "Waiting for driver" }, // Initial status
+        status: { Pending: null }, // Initial status
       };
 
       // Insert the newly created assignment into the storage
@@ -484,7 +467,7 @@ export default Canister({
         const foodSurplusPost = {
           ...payload,
           postId,
-          status: { Available: "Available" }, // Set initial status
+          status: { Available: null }, // Set initial status
         };
 
         // Insert the newly created post into the storage
@@ -493,7 +476,7 @@ export default Canister({
       } catch (error) {
         // Handle any errors that might occur during the creation process
         return Err({
-          Error: `An error occurred while creating the food surplus post: ${Err}`,
+          Error: `An error occurred while creating the food surplus post: ${error}`,
         });
       }
     }
@@ -506,7 +489,7 @@ export default Canister({
     (contractId) => {
       const foodContractOpt = foodContractStorage.get(contractId);
       if ("None" in foodContractOpt) {
-        return Err({ NotFound: "contract with id=${contractId} not found" });
+        return Err({ NotFound: `contract with id=${contractId} not found` });
       }
       return Ok(foodContractOpt.Some);
     }
@@ -517,13 +500,13 @@ export default Canister({
     [text],
     Result(FoodContract, Message),
     (donorId) => {
-      const foodContract = foodContractStorage
+      const foodContracts = foodContractStorage
         .values()
         .filter((contract) => contract.donorId === donorId);
-      if (foodContract.length === 0) {
-        return Err({ NotFound: "contract with donorId=${donorId} not found" });
+      if (foodContracts.length === 0) {
+        return Err({ NotFound: `contract with donorId=${donorId} not found` });
       }
-      return Ok(foodContract[0]);
+      return Ok(foodContracts[0]);
     }
   ),
 
@@ -535,7 +518,7 @@ export default Canister({
       const deliveryAssignmentOpt = deliveryAssignmentStorage.get(assignmentId);
       if ("None" in deliveryAssignmentOpt) {
         return Err({
-          NotFound: "assignment with id=${assignmentId} not found",
+          NotFound: `assignment with id=${assignmentId} not found`,
         });
       }
       return Ok(deliveryAssignmentOpt.Some);
@@ -549,7 +532,7 @@ export default Canister({
     (receiverId) => {
       const receiverProfileOpt = receiverProfileStorage.get(receiverId);
       if ("None" in receiverProfileOpt) {
-        return Err({ NotFound: "receiver with id=${receiverId} not found" });
+        return Err({ NotFound: `receiver with id=${receiverId} not found` });
       }
       return Ok(receiverProfileOpt.Some);
     }
@@ -557,35 +540,35 @@ export default Canister({
 
   // Get Receiver by owner principal using filter
   getReceiverProfileByOwner: query([], Result(ReceiverProfile, Message), () => {
-    const receiverProfile = receiverProfileStorage
+    const receiverProfiles = receiverProfileStorage
       .values()
       .filter((receiver) => {
         return receiver.owner.toText() === ic.caller().toText();
       });
-    if (receiverProfile.length === 0) {
+    if (receiverProfiles.length === 0) {
       return Err({ NotFound: "receiver profile not found" });
     }
-    return Ok(receiverProfile[0]);
+    return Ok(receiverProfiles[0]);
   }),
 
   // Get Donor Profile by id
   getDonorProfile: query([text], Result(DonorProfile, Message), (donorId) => {
     const donorProfileOpt = donorProfileStorage.get(donorId);
     if ("None" in donorProfileOpt) {
-      return Err({ NotFound: "donor with id=${donorId} not found" });
+      return Err({ NotFound: `donor with id=${donorId} not found` });
     }
     return Ok(donorProfileOpt.Some);
   }),
 
   // Get Donor Profile by owner principal using filter
   getDonorProfileByOwner: query([], Result(DonorProfile, Message), () => {
-    const donorProfile = donorProfileStorage.values().filter((donor) => {
+    const donorProfiles = donorProfileStorage.values().filter((donor) => {
       return donor.owner.toText() === ic.caller().toText();
     });
-    if (donorProfile.length === 0) {
+    if (donorProfiles.length === 0) {
       return Err({ NotFound: "donor profile not found" });
     }
-    return Ok(donorProfile[0]);
+    return Ok(donorProfiles[0]);
   }),
 
   // Get Delivery Driver Profile by id
@@ -595,7 +578,7 @@ export default Canister({
     (driverId) => {
       const driverProfileOpt = deliveryDriverProfileStorage.get(driverId);
       if ("None" in driverProfileOpt) {
-        return Err({ NotFound: "driver with id=${driverId} not found" });
+        return Err({ NotFound: `driver with id=${driverId} not found` });
       }
       return Ok(driverProfileOpt.Some);
     }
@@ -606,15 +589,15 @@ export default Canister({
     [],
     Result(DeliveryDriverProfile, Message),
     () => {
-      const driverProfile = deliveryDriverProfileStorage
+      const driverProfiles = deliveryDriverProfileStorage
         .values()
         .filter((driver) => {
           return driver.owner.toText() === ic.caller().toText();
         });
-      if (driverProfile.length === 0) {
+      if (driverProfiles.length === 0) {
         return Err({ NotFound: "driver profile not found" });
       }
-      return Ok(driverProfile[0]);
+      return Ok(driverProfiles[0]);
     }
   ),
 
@@ -625,7 +608,7 @@ export default Canister({
     (postId) => {
       const foodSurplusPostOpt = foodSurplusPostStorage.get(postId);
       if ("None" in foodSurplusPostOpt) {
-        return Err({ NotFound: "post with id=${postId} not found" });
+        return Err({ NotFound: `post with id=${postId} not found` });
       }
       return Ok(foodSurplusPostOpt.Some);
     }
@@ -635,13 +618,11 @@ export default Canister({
   getAcceptedFoodContracts: query([], Vec(FoodContract), () => {
     const acceptedContracts = foodContractStorage
       .values()
-      .filter((contract) => {
-        return contract.status.Accepted !== undefined;
-      });
+      .filter((contract) => contract.status.Accepted !== undefined);
     return acceptedContracts;
   }),
 
-  // Fetch Completed FoodContracts
+  // Fetch Pending FoodContracts
   getPendingFoodContracts: query([], Vec(FoodContract), () => {
     const pendingContracts = foodContractStorage.values().filter((contract) => {
       return contract.status.Pending !== undefined;
@@ -652,7 +633,6 @@ export default Canister({
   // Fetch Completed FoodContracts
   getCompletedFoodContracts: query([], Vec(FoodContract), () => {
     const foodContracts = foodContractStorage.values().filter((contract) => {
-      // Check if the status is 'Completed' and handle the case appropriately
       return contract.status.Completed !== undefined;
     });
     return foodContracts;
@@ -660,11 +640,9 @@ export default Canister({
 
   // Fetch Cancelled FoodContracts
   getCancelledFoodContracts: query([], Vec(FoodContract), () => {
-    const cancelledContracts = foodContractStorage
-      .values()
-      .filter((contract) => {
-        return contract.status.Cancelled !== undefined;
-      });
+    const cancelledContracts = foodContractStorage.values().filter((contract) => {
+      return contract.status.Cancelled !== undefined;
+    });
     return cancelledContracts;
   }),
 
@@ -672,9 +650,7 @@ export default Canister({
   getPendingDeliveryAssignments: query([], Vec(DeliveryAssignment), () => {
     const pendingAssignments = deliveryAssignmentStorage
       .values()
-      .filter((assignment) => {
-        return assignment.status.Pending !== undefined;
-      });
+      .filter((assignment) => assignment.status.Pending !== undefined);
     return pendingAssignments;
   }),
 
@@ -682,9 +658,7 @@ export default Canister({
   getInTransitDeliveryAssignments: query([], Vec(DeliveryAssignment), () => {
     const inTransitAssignments = deliveryAssignmentStorage
       .values()
-      .filter((assignment) => {
-        return assignment.status.InTransit !== undefined;
-      });
+      .filter((assignment) => assignment.status.InTransit !== undefined);
     return inTransitAssignments;
   }),
 
@@ -692,9 +666,7 @@ export default Canister({
   getDeliveredDeliveryAssignments: query([], Vec(DeliveryAssignment), () => {
     const deliveredAssignments = deliveryAssignmentStorage
       .values()
-      .filter((assignment) => {
-        return assignment.status.Delivered !== undefined;
-      });
+      .filter((assignment) => assignment.status.Delivered !== undefined);
     return deliveredAssignments;
   }),
 
@@ -702,13 +674,11 @@ export default Canister({
   getCancelledDeliveryAssignments: query([], Vec(DeliveryAssignment), () => {
     const cancelledAssignments = deliveryAssignmentStorage
       .values()
-      .filter((assignment) => {
-        return assignment.status.Cancelled !== undefined;
-      });
+      .filter((assignment) => assignment.status.Cancelled !== undefined);
     return cancelledAssignments;
   }),
 
-  // Change Delivery Assignment status to Delivered(requires the receiverId and assignmentId)
+  // Change Delivery Assignment status to Delivered (requires the receiverId and assignmentId)
   markDeliveryAssignmentDelivered: update(
     [text, text],
     Result(DeliveryAssignment, Message),
@@ -716,7 +686,7 @@ export default Canister({
       const deliveryAssignmentOpt = deliveryAssignmentStorage.get(assignmentId);
       if ("None" in deliveryAssignmentOpt) {
         return Err({
-          NotFound: "assignment with id=${assignmentId} not found",
+          NotFound: `assignment with id=${assignmentId} not found`,
         });
       }
 
@@ -727,7 +697,7 @@ export default Canister({
         });
       }
 
-      deliveryAssignment.status = { Delivered: "Assignment delivered" };
+      deliveryAssignment.status = { Delivered: null };
       deliveryAssignmentStorage.insert(assignmentId, deliveryAssignment);
       return Ok(deliveryAssignment);
     }
@@ -747,7 +717,7 @@ export default Canister({
     }
   }),
 
-  // Get All Delivery Assignments with no error handling
+  // Get All Delivery Assignments
   getAllDeliveryAssignments: query([], Vec(DeliveryAssignment), () => {
     return deliveryAssignmentStorage.values();
   }),
@@ -773,7 +743,7 @@ export default Canister({
     (contractId, status) => {
       const foodContractOpt = foodContractStorage.get(contractId);
       if ("None" in foodContractOpt) {
-        return Err({ NotFound: "contract with id=${contractId} not found" });
+        return Err({ NotFound: `contract with id=${contractId} not found` });
       }
       const foodContract = foodContractOpt.Some;
       foodContract.status = status;
@@ -790,7 +760,7 @@ export default Canister({
       const deliveryAssignmentOpt = deliveryAssignmentStorage.get(assignmentId);
       if ("None" in deliveryAssignmentOpt) {
         return Err({
-          NotFound: "assignment with id=${assignmentId} not found",
+          NotFound: `assignment with id=${assignmentId} not found`,
         });
       }
       const deliveryAssignment = deliveryAssignmentOpt.Some;
@@ -805,15 +775,15 @@ export default Canister({
     [ReceiverProfilePayload],
     Result(ReceiverProfile, Message),
     (payload) => {
-      const receiverProfile = receiverProfileStorage
+      const receiverProfiles = receiverProfileStorage
         .values()
         .filter((receiver) => {
           return receiver.owner.toText() === ic.caller().toText();
         });
-      if (receiverProfile.length === 0) {
+      if (receiverProfiles.length === 0) {
         return Err({ NotFound: "receiver profile not found" });
       }
-      const receiver = receiverProfile[0];
+      const receiver = receiverProfiles[0];
       receiver.name = payload.name;
       receiver.email = payload.email;
       receiver.phoneNumber = payload.phoneNumber;
@@ -829,13 +799,13 @@ export default Canister({
     [DonorProfilePayload],
     Result(DonorProfile, Message),
     (payload) => {
-      const donorProfile = donorProfileStorage.values().filter((donor) => {
+      const donorProfiles = donorProfileStorage.values().filter((donor) => {
         return donor.owner.toText() === ic.caller().toText();
       });
-      if (donorProfile.length === 0) {
+      if (donorProfiles.length === 0) {
         return Err({ NotFound: "donor profile not found" });
       }
-      const donor = donorProfile[0];
+      const donor = donorProfiles[0];
       donor.name = payload.name;
       donor.email = payload.email;
       donor.phoneNumber = payload.phoneNumber;
@@ -851,15 +821,15 @@ export default Canister({
     [DeliveryDriverProfilePayload],
     Result(DeliveryDriverProfile, Message),
     (payload) => {
-      const driverProfile = deliveryDriverProfileStorage
+      const driverProfiles = deliveryDriverProfileStorage
         .values()
         .filter((driver) => {
           return driver.owner.toText() === ic.caller().toText();
         });
-      if (driverProfile.length === 0) {
+      if (driverProfiles.length === 0) {
         return Err({ NotFound: "driver profile not found" });
       }
-      const driver = driverProfile[0];
+      const driver = driverProfiles[0];
       driver.name = payload.name;
       driver.email = payload.email;
       driver.phoneNumber = payload.phoneNumber;
@@ -876,7 +846,7 @@ export default Canister({
     (postId, status) => {
       const foodSurplusPostOpt = foodSurplusPostStorage.get(postId);
       if ("None" in foodSurplusPostOpt) {
-        return Err({ NotFound: "post with id=${postId} not found" });
+        return Err({ NotFound: `post with id=${postId} not found` });
       }
       const foodSurplusPost = foodSurplusPostOpt.Some;
       foodSurplusPost.status = status;
@@ -892,7 +862,7 @@ export default Canister({
     (contractId) => {
       const foodContractOpt = foodContractStorage.remove(contractId);
       if ("None" in foodContractOpt) {
-        return Err({ NotFound: "contract with id=${contractId} not found" });
+        return Err({ NotFound: `contract with id=${contractId} not found` });
       }
       return Ok(foodContractOpt.Some);
     }
@@ -903,11 +873,10 @@ export default Canister({
     [text],
     Result(DeliveryAssignment, Message),
     (assignmentId) => {
-      const deliveryAssignmentOpt =
-        deliveryAssignmentStorage.remove(assignmentId);
+      const deliveryAssignmentOpt = deliveryAssignmentStorage.remove(assignmentId);
       if ("None" in deliveryAssignmentOpt) {
         return Err({
-          NotFound: "assignment with id=${assignmentId} not found",
+          NotFound: `assignment with id=${assignmentId} not found`,
         });
       }
       return Ok(deliveryAssignmentOpt.Some);
@@ -921,7 +890,7 @@ export default Canister({
     (postId) => {
       const foodSurplusPostOpt = foodSurplusPostStorage.remove(postId);
       if ("None" in foodSurplusPostOpt) {
-        return Err({ NotFound: "post with id=${postId} not found" });
+        return Err({ NotFound: `post with id=${postId} not found` });
       }
       return Ok(foodSurplusPostOpt.Some);
     }
@@ -934,7 +903,7 @@ export default Canister({
     (donorId) => {
       const donorProfileOpt = donorProfileStorage.remove(donorId);
       if ("None" in donorProfileOpt) {
-        return Err({ NotFound: "donor with id=${donorId} not found" });
+        return Err({ NotFound: `donor with id=${donorId} not found` });
       }
       return Ok(donorProfileOpt.Some);
     }
@@ -947,7 +916,7 @@ export default Canister({
     (receiverId) => {
       const receiverProfileOpt = receiverProfileStorage.remove(receiverId);
       if ("None" in receiverProfileOpt) {
-        return Err({ NotFound: "receiver with id=${receiverId} not found" });
+        return Err({ NotFound: `receiver with id=${receiverId} not found` });
       }
       return Ok(receiverProfileOpt.Some);
     }
@@ -960,13 +929,13 @@ export default Canister({
     (driverId) => {
       const driverProfileOpt = deliveryDriverProfileStorage.remove(driverId);
       if ("None" in driverProfileOpt) {
-        return Err({ NotFound: "driver with id=${driverId} not found" });
+        return Err({ NotFound: `driver with id=${driverId} not found` });
       }
       return Ok(driverProfileOpt.Some);
     }
   ),
 
-  // Receiver Accepts a FoodContract by passing the recieverId and contractId
+  // Receiver Accepts a FoodContract by passing the receiverId and contractId
   acceptFoodContract: update(
     [AcceptFoodContractPayload],
     Result(FoodContract, Message),
@@ -975,7 +944,7 @@ export default Canister({
       const foodContractOpt = foodContractStorage.get(payload.contractId);
       if ("None" in foodContractOpt) {
         return Err({
-          NotFound: "contract with id=${payload.contractId} not found",
+          NotFound: `contract with id=${payload.contractId} not found`,
         });
       }
 
@@ -983,7 +952,7 @@ export default Canister({
       const receiverProfileOpt = receiverProfileStorage.get(payload.receiverId);
       if ("None" in receiverProfileOpt) {
         return Err({
-          NotFound: "receiver with id=${payload.receiverId} not found",
+          NotFound: `receiver with id=${payload.receiverId} not found`,
         });
       }
 
@@ -993,12 +962,13 @@ export default Canister({
         return Err({ Error: "Contract already has a receiver" });
       }
 
-      foodContractStorage.insert(payload.contractId, {
+      const updatedContract = {
         ...contract,
         receiverId: Some(payload.receiverId),
-        status: { Accepted: "Contract accepted" },
-      });
-      return Ok(contract);
+        status: { Accepted: null },
+      };
+      foodContractStorage.insert(payload.contractId, updatedContract);
+      return Ok(updatedContract);
     }
   ),
 
@@ -1013,7 +983,7 @@ export default Canister({
       );
       if ("None" in deliveryAssignmentOpt) {
         return Err({
-          NotFound: "assignment with id=${payload.assignmentId} not found",
+          NotFound: `assignment with id=${payload.assignmentId} not found`,
         });
       }
 
@@ -1023,28 +993,27 @@ export default Canister({
       );
       if ("None" in driverProfileOpt) {
         return Err({
-          NotFound: "driver with id=${payload.driverId} not found",
+          NotFound: `driver with id=${payload.driverId} not found`,
         });
       }
 
       // Check if the DeliveryAssignment already has a driver
       const assignment = deliveryAssignmentOpt.Some;
-      const assignmentOpt = deliveryAssignmentStorage.get(payload.driverId);
-      if (assignmentOpt === null) {
+      if (assignment.driverId.Some !== undefined) {
         return Err({ Error: "Assignment already has a driver" });
       }
 
-      deliveryAssignmentStorage.insert(payload.assignmentId, {
+      const updatedAssignment = {
         ...assignment,
         driverId: Some(payload.driverId),
-        status: { InTransit: "Assignment in transit" },
-      });
+        status: { InTransit: null },
+      };
+      deliveryAssignmentStorage.insert(payload.assignmentId, updatedAssignment);
 
-      return Ok(assignment); // Successfully return the updated delivery assignment
+      return Ok(updatedAssignment); // Successfully return the updated delivery assignment
     }
   ),
 
-  // Create a reserve for a delivery assignment
   // Create a reserve for a delivery assignment
   createReserveAssignmentPayment: update(
     [text],
@@ -1058,7 +1027,6 @@ export default Canister({
       }
 
       const assignment = assignmentOpt.Some;
-
       const receiverOpt = receiverProfileStorage.get(assignment.receiverId);
 
       if ("None" in receiverOpt) {
@@ -1088,17 +1056,14 @@ export default Canister({
       try {
         const reserve = {
           assignmentId: assignment.assignmentId,
-          amount: assignment.wages, // Ensure this is correct field for amount
-          status: { PaymentPending: "Payment pending" },
+          amount: assignment.wages,
+          status: { PaymentPending: null },
           receiver: receiver.owner,
           driver: driver.owner,
           paid_at_block: None,
-          memo: generateCorrelationId(assignmentId), // Ensure memo is handled as nat64
+          memo: generateCorrelationId(assignmentId),
           paidAt: "",
         };
-
-        // console.log(`Reserve created: ${reserve}`);
-        // console.log("memo", reserve.memo);
 
         pendingJobPaymentStorage.insert(reserve.memo, reserve);
         discardByTimeout(reserve.memo, TIMEOUT_PERIOD);
@@ -1138,7 +1103,7 @@ export default Canister({
       const assignmentPayment = pendingAssignmentPaymentOpt.Some;
       const updatedReserve = {
         ...assignmentPayment,
-        status: { Completed: "Payment completed" },
+        status: { Completed: null },
         paid_at_block: Some(block),
         paidAt: ic.time().toString(),
       };
@@ -1151,22 +1116,16 @@ export default Canister({
       }
 
       const assignment = assignmentOpt.Some;
-      deliveryAssignmentStorage.insert(assignmentId, {
-        ...assignment,
-        status: { Delivered: "Assignment delivered" },
-      });
-      
-      // console.log("memo type:", typeof memo, "memo value:", memo);
+      assignment.status = { Delivered: null };
+      deliveryAssignmentStorage.insert(assignmentId, assignment);
 
       persistedJobPaymentStorage.insert(ic.caller(), updatedReserve);
       return Ok(updatedReserve);
     }
   ),
 
-  /*
-        a helper function to get address from the principal
-        the address is later used in the transfer method
-    */
+  // A helper function to get address from the principal
+  // The address is later used in the transfer method
   getAddressFromPrincipal: query([Principal], text, (principal) => {
     return hexAddressFromPrincipal(principal, 0);
   }),
@@ -1177,17 +1136,14 @@ export default Canister({
   }),
 });
 
-/*
-    a hash function that is used to generate correlation ids for orders.
-    also, we use that in the verifyPayment function where we check if the used has actually paid the order
-*/
+// Hash function to generate correlation ids for orders
+// Used in the verifyPayment function to check if the user has paid for the order
 function hash(input: any): nat64 {
   return BigInt(Math.abs(hashCode().value(input)));
 }
 
-// a workaround to make uuid package work with Azle
+// Workaround to make uuid package work with Azle
 globalThis.crypto = {
-  // @ts-ignore
   getRandomValues: () => {
     let array = new Uint8Array(32);
 
@@ -1199,15 +1155,13 @@ globalThis.crypto = {
   },
 };
 
-// HELPER FUNCTIONS
+// Helper function to generate correlation id
 function generateCorrelationId(assignmentId: text): nat64 {
   const correlationId = `${assignmentId}_${ic.caller().toText()}_${ic.time()}`;
   return hash(correlationId);
 }
-/*
-    after the order is created, we give the `delay` amount of minutes to pay for the order.
-    if it's not paid during this timeframe, the order is automatically removed from the pending orders.
-*/
+
+// Discard the order if not paid during the timeframe
 function discardByTimeout(memo: nat64, delay: Duration) {
   ic.setTimer(delay, () => {
     const order = pendingJobPaymentStorage.remove(memo);
@@ -1215,6 +1169,7 @@ function discardByTimeout(memo: nat64, delay: Duration) {
   });
 }
 
+// Internal payment verification
 async function verifyPaymentInternal(
   receiver: Principal,
   amount: nat64,
