@@ -269,15 +269,32 @@ export default Canister({
     Result(FoodContract, Message),
     (payload) => {
       // Validate required fields
-      if (!payload.donorId || !payload.postId || payload.agreedQuantity <= 0) {
-        return Err({ InvalidPayload: "Missing or invalid fields" });
+      const errors: Vec<text> = [];
+      // @ts-ignore
+      if (isValidUuid(payload.donorId)) {
+        errors.push(`donorId='${payload.donorId}' is not in the valid format.`);
+      }
+      // @ts-ignore
+      if (isValidUuid(payload.postId)) {
+        errors.push(`postId='${payload.postId}' is not in the valid format.`);
+      }
+      // @ts-ignore
+      if (payload.agreedQuantity <= 0) {
+        errors.push(
+          `agreedQuantity='${payload.agreedQuantity}' must be greater than zero.`
+        );
+      }
+      if (errors.length) {
+        return Err({
+          InvalidPayload: `Invalid payload. Errors=[${errors}]`,
+        });
       }
 
       // Check for existence of donor and post
-      if (!donorProfileStorage.get(payload.donorId)) {
+      if (!donorProfileStorage.containsKey(payload.donorId)) {
         return Err({ InvalidPayload: "Invalid donor ID" });
       }
-      if (!foodSurplusPostStorage.get(payload.postId)) {
+      if (!foodSurplusPostStorage.containsKey(payload.postId)) {
         return Err({ InvalidPayload: "Invalid post ID" });
       }
 
@@ -302,23 +319,46 @@ export default Canister({
     Result(DeliveryAssignment, Message),
     (payload) => {
       // Validate required fields
-      if (
-        !payload.contractId ||
-        !payload.receiverId ||
-        payload.wages <= 0 ||
-        !payload.pickupLocation ||
-        !payload.deliveryLocation
-      ) {
-        return Err({ InvalidPayload: "Missing or invalid fields" });
+      const errors: Vec<text> = [];
+      // @ts-ignore
+      if (isValidUuid(payload.contractId)) {
+        errors.push(`contractId='${payload.contractId}' is not in the valid format.`);
+      }
+      // @ts-ignore
+      if (isValidUuid(payload.receiverId)) {
+        errors.push(`receiverId='${payload.receiverId}' is not in the valid format.`);
+      }
+      // @ts-ignore
+      if (payload.wages <= 0) {
+        errors.push(
+          `wages='${payload.wages}' must be greater than zero.`
+        );
+      }
+      // @ts-ignore
+      if (isInvalidString(payload.pickupLocation)) {
+        errors.push(
+          `pickupLocation='${payload.pickupLocation}' must be greater than zero.`
+        );
+      }
+      // @ts-ignore
+      if (isInvalidString(payload.deliveryLocation)) {
+        errors.push(
+          `deliveryLocation='${payload.deliveryLocation}' must be greater than zero.`
+        );
+      }
+      if (errors.length) {
+        return Err({
+          InvalidPayload: `Invalid payload. Errors=[${errors}]`,
+        });
       }
 
       // Check for valid contractId
-      if (!foodContractStorage.get(payload.contractId)) {
+      if (!foodContractStorage.containsKey(payload.contractId)) {
         return Err({ InvalidPayload: "Invalid contract ID" });
       }
 
       // Check for valid receiverId
-      if (!receiverProfileStorage.get(payload.receiverId)) {
+      if (!receiverProfileStorage.containsKey(payload.receiverId)) {
         return Err({ InvalidPayload: "Invalid receiver ID" });
       }
 
@@ -343,19 +383,12 @@ export default Canister({
     Result(DonorProfile, Message),
     (payload) => {
       // Validate the payload
-      if (
-        !payload.name ||
-        !payload.email ||
-        !payload.phoneNumber ||
-        !payload.address
-      ) {
-        return Err({ InvalidPayload: "Missing required fields" });
-      }
-
-      // Check for valid email format (simple regex example)
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(payload.email)) {
-        return Err({ InvalidPayload: "Invalid email format" });
+      // @ts-ignore
+      const validatePayloadErrors = validateDonorProfilePayload(payload);
+      if (validatePayloadErrors.length) {
+        return Err({
+          InvalidPayload: `Invalid payload. Errors=[${validatePayloadErrors}]`,
+        });
       }
 
       // Validation for unique email check
@@ -381,20 +414,12 @@ export default Canister({
     Result(ReceiverProfile, Message),
     (payload) => {
       // Validate required fields
-      if (
-        !payload.name ||
-        !payload.email ||
-        !payload.phoneNumber ||
-        !payload.address ||
-        !payload.needs
-      ) {
-        return Err({ InvalidPayload: "Missing required fields" });
-      }
-
-      // Email format validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(payload.email)) {
-        return Err({ InvalidPayload: "Invalid email format" });
+      // @ts-ignore
+      const validatePayloadErrors = validateReceiverProfilePayload(payload);
+      if (validatePayloadErrors.length) {
+        return Err({
+          InvalidPayload: `Invalid payload. Errors=[${validatePayloadErrors}]`,
+        });
       }
 
       // Validation for unique email check
@@ -420,19 +445,12 @@ export default Canister({
     Result(DeliveryDriverProfile, Message),
     (payload) => {
       // Validate required fields
-      if (
-        !payload.name ||
-        !payload.email ||
-        !payload.phoneNumber ||
-        !payload.vehicle
-      ) {
-        return Err({ InvalidPayload: "Missing required fields" });
-      }
-
-      // Email format validation
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(payload.email)) {
-        return Err({ InvalidPayload: "Invalid email format" });
+      // @ts-ignore
+      const validatePayloadErrors = validateDeliveryDriverProfilePayload(payload);
+      if (validatePayloadErrors.length) {
+        return Err({
+          InvalidPayload: `Invalid payload. Errors=[${validatePayloadErrors}]`,
+        });
       }
 
       // Validation for unique email check
@@ -458,13 +476,45 @@ export default Canister({
     Result(FoodSurplusPost, Message),
     (payload) => {
       // Validate required fields
-      if (
-        !payload.donorId ||
-        !payload.description ||
-        payload.quantity <= 0 ||
-        !payload.expiryDate
-      ) {
-        return Err({ InvalidPayload: "Missing or invalid fields" });
+      const errors: Vec<text> = [];
+      // @ts-ignore
+      if (isValidUuid(payload.donorId)) {
+        errors.push(`donorId='${payload.donorId}' is not in the valid format.`);
+      }
+      // @ts-ignore
+      if (payload.quantity <= 0) {
+        errors.push(
+          `quantity='${payload.quantity}' must be greater than zero.`
+        );
+      }
+      // @ts-ignore
+      if (isInvalidString(payload.description)) {
+        errors.push(
+          `description='${payload.description}' must be greater than zero.`
+        );
+      }
+      // @ts-ignore
+      if (isInvalidString(payload.expiryDate)) {
+        errors.push(
+          `expiryDate='${payload.expiryDate}' must be greater than zero.`
+        );
+      }
+      // @ts-ignore
+      if (isInvalidString(payload.location)) {
+        errors.push(
+          `location='${payload.location}' must be greater than zero.`
+        );
+      }
+      // @ts-ignore
+      if (isInvalidString(payload.foodType)) {
+        errors.push(
+          `foodType='${payload.foodType}' must be greater than zero.`
+        );
+      }
+      if (errors.length) {
+        return Err({
+          InvalidPayload: `Invalid payload. Errors=[${errors}]`,
+        });
       }
 
       // Validate that expiryDate is in the future
@@ -475,7 +525,7 @@ export default Canister({
       }
 
       // Optional: Check if donor exists (if donor profiles are stored)
-      if (!donorProfileStorage.get(payload.donorId)) {
+      if (!donorProfileStorage.containsKey(payload.donorId)) {
         return Err({ InvalidPayload: "Invalid donor ID" });
       }
 
@@ -805,6 +855,13 @@ export default Canister({
     [ReceiverProfilePayload],
     Result(ReceiverProfile, Message),
     (payload) => {
+      // @ts-ignore
+      const validatePayloadErrors = validateReceiverProfilePayload(payload);
+      if (validatePayloadErrors.length) {
+        return Err({
+          InvalidPayload: `Invalid payload. Errors=[${validatePayloadErrors}]`,
+        });
+      }
       const receiverProfile = receiverProfileStorage
         .values()
         .filter((receiver) => {
@@ -829,6 +886,13 @@ export default Canister({
     [DonorProfilePayload],
     Result(DonorProfile, Message),
     (payload) => {
+      // @ts-ignore
+      const validatePayloadErrors = validateDonorProfilePayload(payload);
+      if (validatePayloadErrors.length) {
+        return Err({
+          InvalidPayload: `Invalid payload. Errors=[${validatePayloadErrors}]`,
+        });
+      }
       const donorProfile = donorProfileStorage.values().filter((donor) => {
         return donor.owner.toText() === ic.caller().toText();
       });
@@ -851,6 +915,13 @@ export default Canister({
     [DeliveryDriverProfilePayload],
     Result(DeliveryDriverProfile, Message),
     (payload) => {
+      // @ts-ignore
+      const validatePayloadErrors = validateDeliveryDriverProfilePayload(payload);
+      if (validatePayloadErrors.length) {
+        return Err({
+          InvalidPayload: `Invalid payload. Errors=[${validatePayloadErrors}]`,
+        });
+      }
       const driverProfile = deliveryDriverProfileStorage
         .values()
         .filter((driver) => {
@@ -1183,6 +1254,102 @@ export default Canister({
 */
 function hash(input: any): nat64 {
   return BigInt(Math.abs(hashCode().value(input)));
+}
+
+
+// Helper function that trims the input string and then checks the length
+// The string is empty if true is returned, otherwise, string is a valid value
+function isInvalidString(str: text): boolean {
+  return str.trim().length == 0;
+}
+
+// Helper function to ensure the input id meets the format used for ids generated by uuid
+function isValidUuid(id: string): boolean {
+  const regexExp =
+    /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
+  return regexExp.test(id);
+}
+
+/**
+ * Helper function to validate the DonorProfilePayload
+ */
+function validateDonorProfilePayload(payload: typeof DonorProfilePayload): Vec<string> {
+  const errors: Vec<text> = [];
+
+  const phoneNumberRegex = /^[+]{1}(?:[0-9\-\\(\\)\\/.]\s?){6,15}[0-9]{1}$/;
+  const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+
+  // @ts-ignore
+  if (isInvalidString(payload.name)) {
+    errors.push(`name='${payload.name}' cannot be empty.`);
+  }
+  // @ts-ignore
+  if (isInvalidString(payload.address)) {
+    errors.push(`address='${payload.address}' cannot be empty.`);
+  }
+  // @ts-ignore
+  if (!phoneNumberRegex.test(payload.phoneNumber)) {
+    errors.push(`phoneNumber='${payload.phoneNumber}' is not in the valid format.`);
+  }
+  // @ts-ignore
+  if (!emailRegex.test(payload.email)) {
+    errors.push(`email='${payload.email}' is not in the valid format.`);
+  }
+  return errors;
+}
+/**
+ * Helper function to validate the ReceiverProfilePayload
+ */
+function validateReceiverProfilePayload(payload: typeof ReceiverProfilePayload): Vec<string> {
+  const errors: Vec<text> = [];
+
+  const phoneNumberRegex = /^[+]{1}(?:[0-9\-\\(\\)\\/.]\s?){6,15}[0-9]{1}$/;
+  const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+
+  // @ts-ignore
+  if (isInvalidString(payload.name)) {
+    errors.push(`name='${payload.name}' cannot be empty.`);
+  }
+  // @ts-ignore
+  if (isInvalidString(payload.address)) {
+    errors.push(`address='${payload.address}' cannot be empty.`);
+  }
+  // @ts-ignore
+  if (isInvalidString(payload.needs)) {
+    errors.push(`needs='${payload.needs}' cannot be empty.`);
+  }
+  // @ts-ignore
+  if (!phoneNumberRegex.test(payload.phoneNumber)) {
+    errors.push(`phoneNumber='${payload.phoneNumber}' is not in the valid format.`);
+  }
+  // @ts-ignore
+  if (!emailRegex.test(payload.email)) {
+    errors.push(`email='${payload.email}' is not in the valid format.`);
+  }
+  return errors;
+}
+/**
+ * Helper function to validate the DeliveryDriverProfilePayload
+ */
+function validateDeliveryDriverProfilePayload(payload: typeof DeliveryDriverProfilePayload): Vec<string> {
+  const errors: Vec<text> = [];
+
+  const phoneNumberRegex = /^[+]{1}(?:[0-9\-\\(\\)\\/.]\s?){6,15}[0-9]{1}$/;
+  const emailRegex = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+
+  // @ts-ignore
+  if (isInvalidString(payload.name)) {
+    errors.push(`name='${payload.name}' cannot be empty.`);
+  }
+  // @ts-ignore
+  if (!phoneNumberRegex.test(payload.phoneNumber)) {
+    errors.push(`phoneNumber='${payload.phoneNumber}' is not in the valid format.`);
+  }
+  // @ts-ignore
+  if (!emailRegex.test(payload.email)) {
+    errors.push(`email='${payload.email}' is not in the valid format.`);
+  }
+  return errors;
 }
 
 // a workaround to make uuid package work with Azle
